@@ -6,11 +6,42 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
     apple.ay = 25 * Math.sin(angle)
     apple.ax = 25 * Math.cos(angle)
     fireball.setFlag(SpriteFlag.Invisible, false)
+    rocketfleg = 1
 })
 controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
     angle += 15 * (3.14 / 180)
 })
 scene.onOverlapTile(SpriteKind.Player, sprites.dungeon.darkGroundNorthWest1, function (sprite, location) {
+    if (Math.abs(apple.vx) > 20 || apple.vy > 50) {
+        boom = sprites.create(img`
+            . . . . 2 2 2 2 2 2 2 2 . . . . 
+            . . . 2 4 4 4 5 5 4 4 4 2 2 2 . 
+            . 2 2 5 5 d 4 5 5 5 4 4 4 4 2 . 
+            . 2 4 5 5 5 5 d 5 5 5 4 5 4 2 2 
+            . 2 4 d d 5 5 5 5 5 5 d 4 4 4 2 
+            2 4 5 5 d 5 5 5 d d d 5 5 5 4 4 
+            2 4 5 5 4 4 4 d 5 5 d 5 5 5 4 4 
+            4 4 4 4 . . 2 4 5 5 . . 4 4 4 4 
+            . . b b b b 2 4 4 2 b b b b . . 
+            . b d d d d 2 4 4 2 d d d d b . 
+            b d d b b b 2 4 4 2 b b b d d b 
+            b d d b b b b b b b b b b d d b 
+            b b d 1 1 3 1 1 d 1 d 1 1 d b b 
+            . . b b d d 1 1 3 d d 1 b b . . 
+            . . 2 2 4 4 4 4 4 4 4 4 2 2 . . 
+            . . . 2 2 4 4 4 4 4 2 2 2 . . . 
+            `, SpriteKind.Projectile)
+        boom.setPosition(scene.cameraProperty(CameraProperty.X), scene.cameraProperty(CameraProperty.Y))
+        scene.cameraFollowSprite(boom)
+        music.bigCrash.playUntilDone()
+        pause(100)
+        game.over(false)
+    } else {
+        if (landingFlag == 0) {
+            fuel += 100
+            landingFlag = 1
+        }
+    }
     apple.setVelocity(0, -1)
 })
 controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
@@ -19,10 +50,18 @@ controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
 controller.A.onEvent(ControllerButtonEvent.Released, function () {
     apple.ay = 20
     fireball.setFlag(SpriteFlag.Invisible, true)
+    rocketfleg = 0
 })
+let boom: Sprite = null
 let apple: Sprite = null
 let angle = 0
 let fireball: Sprite = null
+let landingFlag = 0
+let rocketfleg = 0
+let fuel = 1000
+let fuelSprire = textsprite.create(convertToText(fuel))
+rocketfleg = 0
+landingFlag = 0
 fireball = sprites.create(img`
     . . . . . . . . . . . . . . . . 
     . . . . . . 4 4 4 4 . . . . . . 
@@ -73,11 +112,20 @@ apple.ay = 20
 let myMinimap = minimap.minimap(MinimapScale.Eighth, 2, 0)
 let minimap2 = sprites.create(minimap.getImage(myMinimap), SpriteKind.map)
 game.onUpdate(function () {
+    fuelSprire.destroy()
     minimap2.destroy()
+    fuelSprire = textsprite.create(convertToText(fuel))
+    fuelSprire.setPosition(apple.x, apple.top)
     myMinimap = minimap.minimap(MinimapScale.Eighth, 2, 0)
     minimap.includeSprite(myMinimap, apple, MinimapSpriteScale.MinimapScale)
     minimap2 = sprites.create(minimap.getImage(myMinimap), SpriteKind.map)
     minimap2.setPosition(apple.x - 50, apple.y - 30)
     engine.setPosition(apple.x + -8 * Math.cos(angle), apple.y + -8 * Math.sin(angle))
     fireball.setPosition(apple.x + -8 * Math.cos(angle), apple.y + -8 * Math.sin(angle))
+    if (rocketfleg == 1) {
+        fuel += -1
+    }
+    if (apple.y < 150) {
+        landingFlag = 0
+    }
 })
